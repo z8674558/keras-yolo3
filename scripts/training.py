@@ -156,7 +156,6 @@ def _main(path_dataset, path_anchors, path_weights=None, path_output='.',
     # Adjust num epochs to your dataset. This step is enough to obtain a not bad model.
     # See: https://github.com/qqwweee/keras-yolo3/issues/129#issuecomment-408855511
     _yolo_loss = lambda y_true, y_pred: y_pred[0]  # use custom yolo_loss Lambda layer.
-    print(config)
     _data_generator = partial(data_generator,
                               input_shape=config['image-size'],
                               anchors=anchors,
