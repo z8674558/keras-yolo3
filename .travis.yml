@@ -7,6 +7,8 @@ env:
   global:
     - DISPLAY=""
 
+cache: pip
+
 matrix:
   include:
 #    - python: 2.7
