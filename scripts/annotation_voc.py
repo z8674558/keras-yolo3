@@ -13,7 +13,7 @@ Creating training file from VOC dataset
     --path_dataset ~/Data/VOCdevkit \
     --classes aeroplane bicycle bird boat bottle bus car cat chair person \
     --sets 2007,train 2007,val \
-    --path_output ../model_data
+    --path_output ../model_data;
 """
 
 import os

@@ -9,10 +9,10 @@ import logging
 import colorsys
 
 import numpy as np
-import keras.backend as K
-from keras.models import load_model
-from keras.layers import Input
-from keras.utils import multi_gpu_model
+import tensorflow.keras.backend as K
+from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import Input
+from tensorflow.keras.utils import multi_gpu_model
 
 from .model import yolo_eval, yolo_body_full, yolo_body_tiny
 from .utils import letterbox_image, update_path, get_anchors, get_class_names

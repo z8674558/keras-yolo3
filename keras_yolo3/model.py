@@ -9,14 +9,15 @@ from functools import wraps
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 import tensorflow as tf
-import keras.backend as K
-from keras.layers import Conv2D, Add, ZeroPadding2D, UpSampling2D, Concatenate, MaxPooling2D
-from keras.layers import Input, Lambda
-from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.normalization import BatchNormalization
-from keras.models import Model
-from keras.regularizers import l2
-from keras.utils import multi_gpu_model
+import tensorflow.keras.backend as K
+from tensorflow import while_loop
+from tensorflow.keras.layers import Conv2D, Add, ZeroPadding2D, UpSampling2D, Concatenate, MaxPooling2D
+from tensorflow.keras.layers import Input, Lambda
+from tensorflow.keras.layers import LeakyReLU
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.models import Model
+from tensorflow.keras.regularizers import l2
+from tensorflow.keras.utils import multi_gpu_model
 
 from keras_yolo3.utils import compose, update_path
 
@@ -512,7 +513,7 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=0.5, print_loss=False):
                                                       K.dtype(true_box)))
             return b + 1, ignore_mask
 
-        _, ignore_mask = K.control_flow_ops.while_loop(
+        _, ignore_mask = while_loop(
             lambda b, *args: b < m, _loop_body, [0, ignore_mask])
         ignore_mask = ignore_mask.stack()
         ignore_mask = K.expand_dims(ignore_mask, -1)
@@ -534,6 +535,7 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=0.5, print_loss=False):
         confidence_loss = K.sum(confidence_loss) / mf
         class_loss = K.sum(class_loss) / mf
         loss += xy_loss + wh_loss + confidence_loss + class_loss
+        tf.print("xy loss", xy_loss)
         if print_loss:
             loss = tf.Print(loss, [loss, xy_loss, wh_loss, confidence_loss,
                                    class_loss, K.sum(ignore_mask)],
