@@ -7,7 +7,7 @@ Pillow
 pydot
 pydot-ng
 graphviz
-tensorflow>=2.0.0  # breaking compatibility
+tensorflow>=2.0.0
 pandas
 opencv-python
 tqdm
