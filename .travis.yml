@@ -7,21 +7,18 @@ env:
   global:
     - DISPLAY=""
 
-cache: pip
-
 matrix:
   include:
 #    - python: 2.7
 #      env: TOXENV=py27
-    - python: 3.5
-      env: TOXENV=py35
+#    - python: 3.5
+#      env: TOXENV=py35
     - python: 3.6
       env: TOXENV=py36
     - python: 3.7
       env: TOXENV=py37
 
 install:
-  - pip install -U pip==20.0.2
   - pip install -r requirements.txt
   - pip install tox codecov
   - pip list
