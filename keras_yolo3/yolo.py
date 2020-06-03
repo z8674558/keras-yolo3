@@ -102,7 +102,7 @@ class YOLO(object):
             # Don't pre-allocate memory; allocate as-needed
             config.gpu_options.allow_growth = True
             self.sess = tf.tf.compat.v1.Session(config=config)
-            K.tensorflow_backend.set_session(self.sess)
+            K.set_session(self.sess)
         else:
             logging.warning('Using %s backend.', K.backend())
             self.sess = K.get_session()
