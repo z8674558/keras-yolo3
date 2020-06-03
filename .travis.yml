@@ -25,6 +25,8 @@ install:
   - pip install tox codecov
   - pip list
 
-script: tox --sitepackages
+script:
+  - python -m pip install --upgrade pip
+  - tox --sitepackages
 
 after_success: codecov
