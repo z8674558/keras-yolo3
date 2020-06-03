@@ -87,25 +87,9 @@ class YOLO(object):
 
         self.class_names = get_class_names(self.classes_path)
         self.anchors = get_anchors(self.anchors_path)
-        self._open_session()
         self.boxes, self.scores, self.classes = self._create_model(model_image_size)
 
         self._generate_class_colors()
-
-    def _open_session(self):
-        if K.backend().lower() == 'tensorflow':
-            import tensorflow as tf
-            config = tf.ConfigProto(allow_soft_placement=True,
-                                    log_device_placement=False)
-            config.gpu_options.force_gpu_compatible = True
-            # config.gpu_options.per_process_gpu_memory_fraction = 0.3
-            # Don't pre-allocate memory; allocate as-needed
-            config.gpu_options.allow_growth = True
-            self.sess = tf.compat.v1.Session(config=config)
-            K.set_session(self.sess)
-        else:
-            logging.warning('Using %s backend.', K.backend())
-            self.sess = K.get_session()
 
     def _create_model(self, model_image_size=(None, None)):
         # weights_path = update_path(self.weights_path)
@@ -207,9 +191,3 @@ class YOLO(object):
             ))
             predicts.append(pred)
         return image, predicts
-
-    def _close_session(self):
-        self.sess.close()
-
-    def __del__(self):
-        self._close_session()
