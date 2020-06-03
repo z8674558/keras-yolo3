@@ -9,7 +9,7 @@ import logging
 import colorsys
 
 import numpy as np
-import tensorflow.keras.backend as K
+import tensorflow.compat.v1.keras.backend as K
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import Input
 from tensorflow.keras.utils import multi_gpu_model
@@ -87,9 +87,14 @@ class YOLO(object):
 
         self.class_names = get_class_names(self.classes_path)
         self.anchors = get_anchors(self.anchors_path)
+        self._open_session()
         self.boxes, self.scores, self.classes = self._create_model(model_image_size)
 
         self._generate_class_colors()
+
+    def _open_session(self):
+        logging.warning('Using %s backend.', K.backend())
+        self.sess = K.get_session()
 
     def _create_model(self, model_image_size=(None, None)):
         # weights_path = update_path(self.weights_path)
@@ -191,3 +196,9 @@ class YOLO(object):
             ))
             predicts.append(pred)
         return image, predicts
+
+    def _close_session(self):
+        self.sess.close()
+
+    def __del__(self):
+        self._close_session()
