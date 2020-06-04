@@ -419,7 +419,7 @@ def box_iou_xywh(tensor1, tensor2):
     >>> bbox2 = K.variable(value=[300, 250, 100, 100], dtype='float32')
     >>> iou = box_iou_xywh(bbox1, bbox2)
     >>> iou
-    <tf.Tensor: shape=(1,) dtype=float32>
+    <tf.Tensor: shape=(1,), dtype=float32, numpy=...>
     >>> K.eval(iou)
     array([0.1764706], dtype=float32)
     """
@@ -483,29 +483,29 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=0.5, print_loss=False):
         object_mask = y_true[layer_idx][..., 4:5]
         true_class_probs = y_true[layer_idx][..., 5:]
 
-        grid, raw_pred, pred_xy, pred_wh = yolo_head(yolo_outputs[l],
-                                                     anchors[anchor_mask[l]],
+        grid, raw_pred, pred_xy, pred_wh = yolo_head(yolo_outputs[layer_idx],
+                                                     anchors[anchor_mask[layer_idx]],
                                                      num_classes, input_shape,
                                                      calc_loss=True)
         pred_box = K.concatenate([pred_xy, pred_wh])
 
         # Darknet raw box to calculate loss.
-        raw_true_xy = y_true[l][..., :2] * grid_shapes[l][::-1] - grid
-        raw_true_wh = K.log(y_true[l][..., 2:4] / anchors[anchor_mask[l]] * input_shape[::-1])
+        raw_true_xy = y_true[layer_idx][..., :2] * grid_shapes[layer_idx][::-1] - grid
+        raw_true_wh = K.log(y_true[layer_idx][..., 2:4] / anchors[anchor_mask[layer_idx]] * input_shape[::-1])
         # Keras switch allows scalr condition, bit here is expected to have elemnt-wise
         #  also the `object_mask` has in last dimension 1 but the in/out puts has 2 (some replication)
         # raw_true_wh = tf.where(tf.greater(K.concatenate([object_mask] * 2), 0),
         #                        raw_true_wh, K.zeros_like(raw_true_wh))  # avoid log(0)=-inf
         raw_true_wh = K.switch(object_mask, raw_true_wh,
                                K.zeros_like(raw_true_wh))  # avoid log(0)=-inf
-        box_loss_scale = 2 - y_true[l][..., 2:3] * y_true[l][..., 3:4]
+        box_loss_scale = 2 - y_true[layer_idx][..., 2:3] * y_true[layer_idx][..., 3:4]
 
         # Find ignore mask, iterate over each of batch.
         ignore_mask = tf.TensorArray(K.dtype(y_true[0]), size=1, dynamic_size=True)
         object_mask_bool = K.cast(object_mask, 'bool')
 
         def _loop_body(b, ignore_mask):
-            true_box = tf.boolean_mask(y_true[l][b, ..., 0:4],
+            true_box = tf.boolean_mask(y_true[layer_idx][b, ..., 0:4],
                                        object_mask_bool[b, ..., 0])
             iou = box_iou_xywh(pred_box[b], true_box)
             best_iou = K.max(iou, axis=-1)
