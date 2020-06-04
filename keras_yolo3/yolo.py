@@ -9,10 +9,12 @@ import logging
 import colorsys
 
 import numpy as np
-import tensorflow.compat.v1.keras.backend as K
+import tensorflow.keras.backend as K
 from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import Input
 from tensorflow.keras.utils import multi_gpu_model
+from tensorflow.compat.v1.keras.backend import get_session
+from tensorflow.compat.v1 import disable_eager_execution
 
 from .model import yolo_eval, yolo_body_full, yolo_body_tiny
 from .utils import letterbox_image, update_path, get_anchors, get_class_names
@@ -88,13 +90,14 @@ class YOLO(object):
         self.class_names = get_class_names(self.classes_path)
         self.anchors = get_anchors(self.anchors_path)
         self._open_session()
+        disable_eager_execution()
         self.boxes, self.scores, self.classes = self._create_model(model_image_size)
 
         self._generate_class_colors()
 
     def _open_session(self):
         logging.warning('Using %s backend.', K.backend())
-        self.sess = K.get_session()
+        self.sess = get_session()
 
     def _create_model(self, model_image_size=(None, None)):
         # weights_path = update_path(self.weights_path)
@@ -155,7 +158,7 @@ class YOLO(object):
     def detect_image(self, image):
         start = time.time()
         # this should be taken from the model
-        model_image_size = self.yolo_model._input_layers[0].input_shape[1:3]
+        model_image_size = self.yolo_model._input_layers[0].input_shape[0][1:3]
 
         if all(model_image_size):
             for size in model_image_size:
