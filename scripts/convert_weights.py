@@ -33,7 +33,7 @@ import tqdm
 import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.keras.layers import (Conv2D, Input, ZeroPadding2D, Add,
-                          UpSampling2D, MaxPooling2D, Concatenate)
+                                     UpSampling2D, MaxPooling2D, Concatenate)
 from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.models import Model

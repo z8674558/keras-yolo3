@@ -89,7 +89,7 @@ def yolo_body_full(inputs, num_anchors, num_classes):
     :return:
 
     >>> yolo_body_full(Input(shape=(None, None, 3)), 6, 10)  #doctest: +ELLIPSIS
-    <keras.engine.training.Model object at ...>
+    <tensorflow.python.keras.engine.training.Model object at ...>
     """
     darknet = Model(inputs, darknet_body(inputs))
     x, y1 = make_last_layers(darknet.output, 512, num_anchors * (num_classes + 5))
@@ -118,7 +118,7 @@ def yolo_body_tiny(inputs, num_anchors, num_classes):
     :return:
 
     >>> yolo_body_tiny(Input(shape=(None, None, 3)), 6, 10)  #doctest: +ELLIPSIS
-    <keras.engine.training.Model object at ...>
+    <tensorflow.python.keras.engine.training.Model object at ...>
     """
     x1 = compose(
         DarknetConv2D_BN_Leaky(16, (3, 3)),
@@ -224,9 +224,9 @@ def yolo_eval(yolo_outputs, anchors, num_classes, image_shape, max_boxes=20,
     input_shape = K.shape(yolo_outputs[0])[1:3] * 32
     boxes = []
     box_scores = []
-    for l in range(num_layers):
-        _boxes, _box_scores = yolo_boxes_scores(yolo_outputs[l],
-                                                anchors[anchor_mask[l]],
+    for layer_idx in range(num_layers):
+        _boxes, _box_scores = yolo_boxes_scores(yolo_outputs[layer_idx],
+                                                anchors[anchor_mask[layer_idx]],
                                                 num_classes, input_shape,
                                                 image_shape)
         boxes.append(_boxes)
@@ -419,7 +419,7 @@ def box_iou_xywh(tensor1, tensor2):
     >>> bbox2 = K.variable(value=[300, 250, 100, 100], dtype='float32')
     >>> iou = box_iou_xywh(bbox1, bbox2)
     >>> iou
-    <tf.Tensor 'truediv_2:0' shape=(1,) dtype=float32>
+    <tf.Tensor: shape=(1,) dtype=float32>
     >>> K.eval(iou)
     array([0.1764706], dtype=float32)
     """
@@ -473,15 +473,15 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=0.5, print_loss=False):
         if num_layers == 3 else [[3, 4, 5], [0, 1, 2]]
     input_shape = K.cast(K.shape(yolo_outputs[0])[1:3] * 32,
                          K.dtype(y_true[0]))
-    grid_shapes = [K.cast(K.shape(yolo_outputs[l])[1:3], K.dtype(y_true[0]))
-                   for l in range(num_layers)]
+    grid_shapes = [K.cast(K.shape(yolo_outputs[layer_idx])[1:3], K.dtype(y_true[0]))
+                   for layer_idx in range(num_layers)]
     loss = 0
     m = K.shape(yolo_outputs[0])[0]  # batch size, tensor
     mf = K.cast(m, K.dtype(yolo_outputs[0]))
 
-    for l in range(num_layers):
-        object_mask = y_true[l][..., 4:5]
-        true_class_probs = y_true[l][..., 5:]
+    for layer_idx in range(num_layers):
+        object_mask = y_true[layer_idx][..., 4:5]
+        true_class_probs = y_true[layer_idx][..., 5:]
 
         grid, raw_pred, pred_xy, pred_wh = yolo_head(yolo_outputs[l],
                                                      anchors[anchor_mask[l]],
@@ -582,11 +582,11 @@ def create_model(input_shape, anchors, num_classes, weights_path=None, model_fac
 
     model_loss_fn = Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
                            arguments=_LOSS_ARGUMENTS)
-    y_true = [Input(shape=(cnn_h // {i: _INPUT_SHAPES[i] for i in range(model_factor)}[l],
-                           cnn_w // {i: _INPUT_SHAPES[i] for i in range(model_factor)}[l],
+    y_true = [Input(shape=(cnn_h // {i: _INPUT_SHAPES[i] for i in range(model_factor)}[layer_idx],
+                           cnn_w // {i: _INPUT_SHAPES[i] for i in range(model_factor)}[layer_idx],
                            num_anchors // model_factor,
                            num_classes + 5))
-              for l in range(model_factor)]
+              for layer_idx in range(model_factor)]
     model_loss = model_loss_fn([*model_body.output, *y_true])
     model = Model([model_body.input, *y_true], model_loss)
 
@@ -614,11 +614,11 @@ def create_model_bottleneck(input_shape, anchors, num_classes, freeze_body=2,
     image_input = Input(shape=(cnn_w, cnn_h, 3))
     num_anchors = len(anchors)
 
-    y_true = [Input(shape=(cnn_h // {0: 32, 1: 16, 2: 8}[l],
-                           cnn_w // {0: 32, 1: 16, 2: 8}[l],
+    y_true = [Input(shape=(cnn_h // {0: 32, 1: 16, 2: 8}[layer_idx],
+                           cnn_w // {0: 32, 1: 16, 2: 8}[layer_idx],
                            num_anchors // 3,
                            num_classes + 5))
-              for l in range(3)]
+              for layer_idx in range(3)]
 
     _LOSS_ARGUMENTS = {
         'anchors': anchors,
